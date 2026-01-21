@@ -82,21 +82,29 @@ router.post("/", async (req, res) => {
       transactionId,
     } = req.body;
 
-    // Generate Unique Code
+    // Generate Unique Code using timestamp + random
     const date = new Date();
     const day = String(date.getDate()).padStart(2, "0");
     const month = String(date.getMonth() + 1).padStart(2, "0");
 
-    // Get start and end of today
-    const startOfDay = new Date(date.setHours(0, 0, 0, 0));
-    const endOfDay = new Date(date.setHours(23, 59, 59, 999));
+    // Use seconds + random for uniqueness
+    const seconds = String(date.getSeconds()).padStart(2, "0");
+    const random = String(Math.floor(Math.random() * 100)).padStart(2, "0");
 
-    // Count orders created today
-    const count = await Order.countDocuments({
-      createdAt: { $gte: startOfDay, $lte: endOfDay },
-    });
+    let uniqueCode = `${day}${month}${seconds}${random}`;
 
-    const uniqueCode = `${day}${month}${String(count + 1).padStart(2, "0")}`;
+    // If code exists, keep generating until unique
+    let existing = await Order.findOne({ uniqueCode });
+    let attempts = 0;
+    while (existing && attempts < 10) {
+      const newRandom = String(Math.floor(Math.random() * 10000)).padStart(
+        4,
+        "0",
+      );
+      uniqueCode = `${day}${month}${newRandom}`;
+      existing = await Order.findOne({ uniqueCode });
+      attempts++;
+    }
 
     const newOrder = new Order({
       studentName,

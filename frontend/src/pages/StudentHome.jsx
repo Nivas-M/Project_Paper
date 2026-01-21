@@ -93,6 +93,8 @@ const StudentHome = () => {
       if (!res.ok) throw new Error('Order creation failed');
 
       const orderData = await res.json();
+      console.log("Order Created. Full Response:", orderData);
+      console.log("Unique Code to pass:", orderData.uniqueCode);
       navigate('/success', { state: { uniqueCode: orderData.uniqueCode } });
     } catch (err) {
       setError('Failed to place order. Please try again.');
