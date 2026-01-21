@@ -298,17 +298,52 @@ const StudentHome = () => {
                     </div>
                     
                     {formData.colorMode === 'selected' && (
-                      <div className="mt-3">
+                      <div className="mt-3 bg-indigo-50 p-4 rounded-lg border border-indigo-100">
+                        <label className="block text-sm font-medium text-indigo-800 mb-2">
+                          Color Page Numbers (across all PDFs)
+                        </label>
                         <input
                           type="text"
                           value={formData.colorPages}
                           onChange={(e) => setFormData({...formData, colorPages: e.target.value})}
-                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                          className="w-full px-4 py-2 border border-indigo-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                           placeholder="e.g., 1,3,5-7"
                         />
-                        <p className="text-xs text-gray-500 mt-1">Enter page numbers separated by commas. Use dash for ranges.</p>
+                        <p className="text-xs text-indigo-600 mt-2">
+                          📄 Your {uploadedFiles.length} file(s) have {getTotalPages()} pages total. 
+                          Enter page numbers (1 to {getTotalPages()}) separated by commas. Use dash for ranges (e.g., 5-10).
+                        </p>
+                        {uploadedFiles.length > 1 && (
+                          <div className="mt-2 text-xs text-gray-600 bg-white p-2 rounded">
+                            <strong>Page distribution:</strong>
+                            {uploadedFiles.map((f, i) => {
+                              const prevPages = uploadedFiles.slice(0, i).reduce((sum, pf) => sum + pf.pageCount, 0);
+                              const startPage = prevPages + 1;
+                              const endPage = prevPages + f.pageCount;
+                              return (
+                                <span key={i} className="block">
+                                  {f.fileName}: Pages {startPage}-{endPage}
+                                </span>
+                              );
+                            })}
+                          </div>
+                        )}
                       </div>
                     )}
+                  </div>
+                  
+                  {/* Instructions */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Special Instructions (Optional)
+                    </label>
+                    <textarea
+                      value={formData.instructions}
+                      onChange={(e) => setFormData({...formData, instructions: e.target.value})}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                      placeholder="e.g., Print double-sided, Bind with spiral, Staple top-left corner, etc."
+                      rows={3}
+                    />
                   </div>
                 </div>
 
@@ -338,6 +373,49 @@ const StudentHome = () => {
                         {formData.colorMode === 'bw' ? 'All B&W' : formData.colorMode === 'all' ? 'All Color' : 'Mixed'}
                       </span>
                     </div>
+                    
+                    {/* Detailed Price Breakdown */}
+                    <div className="pt-3 border-t border-gray-200 space-y-2">
+                      <p className="text-xs text-gray-500 font-medium uppercase tracking-wider">Price Breakdown</p>
+                      
+                      {/* B&W Cost */}
+                      {(() => {
+                        const totalPages = getTotalPages() * formData.copies;
+                        let colorCount = 0;
+                        if (formData.colorMode === 'all') {
+                          colorCount = totalPages;
+                        } else if (formData.colorMode === 'selected' && formData.colorPages) {
+                          colorCount = parseColorPagesCount(formData.colorPages) * formData.copies;
+                          colorCount = Math.min(colorCount, totalPages);
+                        }
+                        const bwCount = totalPages - colorCount;
+                        const bwCost = bwCount * 2;
+                        const colorCost = colorCount * 10;
+                        
+                        return (
+                          <>
+                            {bwCount > 0 && (
+                              <div className="flex justify-between text-sm">
+                                <span className="text-gray-600">B&W ({bwCount} pages × ₹2)</span>
+                                <span className="font-medium">₹{bwCost}</span>
+                              </div>
+                            )}
+                            {colorCount > 0 && (
+                              <div className="flex justify-between text-sm">
+                                <span className="text-gray-600">
+                                  Color ({colorCount} pages × ₹10)
+                                  {formData.colorMode === 'selected' && formData.colorPages && (
+                                    <span className="text-xs text-indigo-500 block">Pages: {formData.colorPages}</span>
+                                  )}
+                                </span>
+                                <span className="font-medium">₹{colorCost}</span>
+                              </div>
+                            )}
+                          </>
+                        );
+                      })()}
+                    </div>
+                    
                     <div className="flex justify-between text-gray-500">
                       <span>Delivery Fee</span>
                       <span>₹5</span>

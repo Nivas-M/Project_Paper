@@ -253,15 +253,32 @@ const AdminDashboard = () => {
                       </div>
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-600">
-                      <p>{order.copies} Copies</p>
-                      <p>
-                        {order.colorPages === 'all' ? 'All Color' : 
-                         order.colorPages ? `Color: ${order.colorPages}` : 
-                         order.color ? 'Color' : 'B&W'}
+                      <p className="font-medium">{order.copies} Copies</p>
+                      <p className="text-xs text-gray-400 mb-1">
+                        {order.files ? order.files.reduce((sum, f) => sum + f.pageCount, 0) : order.pageCount} pages total
                       </p>
-                      <p className="text-xs text-gray-400">
-                        {order.files ? order.files.reduce((sum, f) => sum + f.pageCount, 0) : order.pageCount} pages
-                      </p>
+                      {/* Color Mode Display */}
+                      {order.colorPages === 'all' ? (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800">
+                          🎨 All Color
+                        </span>
+                      ) : order.colorPages ? (
+                        <div>
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-orange-100 text-orange-800">
+                            🎨 Color Pages: {order.colorPages}
+                          </span>
+                        </div>
+                      ) : (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800">
+                          ⬛ All B&W
+                        </span>
+                      )}
+                      {/* Instructions */}
+                      {order.instructions && (
+                        <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded text-xs text-yellow-800">
+                          📝 <strong>Note:</strong> {order.instructions}
+                        </div>
+                      )}
                     </td>
                     <td className="px-6 py-4">
                       <p className="font-bold text-gray-900">₹{order.totalCost}</p>
