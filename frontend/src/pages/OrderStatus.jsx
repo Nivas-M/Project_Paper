@@ -75,7 +75,7 @@ const OrderStatus = () => {
                 : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
             }`}
           >
-            Search by Order ID
+            Search by ID / Code
           </button>
           <button
             type="button"
@@ -95,7 +95,7 @@ const OrderStatus = () => {
             type="text"
             value={orderId}
             onChange={(e) => setOrderId(e.target.value)}
-            placeholder={searchMode === 'id' ? 'Enter Order ID (e.g. 64f...)' : 'Enter Student Name'}
+            placeholder={searchMode === 'id' ? 'Enter Order ID or Tracking Code' : 'Enter Student Name'}
             className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
           />
           <button

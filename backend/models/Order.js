@@ -11,6 +11,7 @@ const orderSchema = new mongoose.Schema({
   instructions: { type: String, default: "" },
   totalCost: { type: Number, required: true },
   transactionId: { type: String, required: true },
+  uniqueCode: { type: String, unique: true },
   status: {
     type: String,
     enum: ["Pending", "Printed", "Collected"],

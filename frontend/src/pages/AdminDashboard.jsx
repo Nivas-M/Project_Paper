@@ -42,6 +42,24 @@ const AdminDashboard = () => {
     }
   };
 
+  const handleDelete = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this order?')) return;
+
+    const token = localStorage.getItem('adminToken');
+    try {
+      const res = await fetch(`${API_URL}/orders/${id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (res.ok) {
+        setOrders(orders.filter(order => order._id !== id));
+      }
+    } catch (err) {
+      console.error('Failed to delete order', err);
+    }
+  };
+
   const updateStatus = async (id, newStatus) => {
     const token = localStorage.getItem('adminToken');
     try {
@@ -153,6 +171,7 @@ const AdminDashboard = () => {
             <table className="w-full text-left">
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
+                  <th className="px-6 py-4 font-semibold text-gray-700 text-sm">Code</th>
                   <th className="px-6 py-4 font-semibold text-gray-700 text-sm">Order Info</th>
                   <th className="px-6 py-4 font-semibold text-gray-700 text-sm">File Details</th>
                   <th className="px-6 py-4 font-semibold text-gray-700 text-sm">Config</th>
@@ -164,6 +183,11 @@ const AdminDashboard = () => {
               <tbody className="divide-y divide-gray-100">
                 {filteredOrders.map((order) => (
                   <tr key={order._id} className="hover:bg-gray-50 transition-colors">
+                    <td className="px-6 py-4">
+                      <span className="font-mono font-bold text-indigo-600 bg-indigo-50 px-2 py-1 rounded">
+                        {order.uniqueCode || '-'}
+                      </span>
+                    </td>
                     <td className="px-6 py-4">
                       <p className="font-semibold text-gray-900">{order.studentName}</p>
                       <p className="text-xs text-gray-500">{new Date(order.createdAt).toLocaleString()}</p>
@@ -218,6 +242,18 @@ const AdminDashboard = () => {
                         >
                           Mark Collected
                         </button>
+                      )}
+                      {order.status === 'Collected' && (
+                        <div className="flex gap-3 justify-end items-center">
+                            <span className="text-gray-400 text-sm font-medium">Completed</span>
+                            <button 
+                              onClick={() => handleDelete(order._id)}
+                              className="text-red-600 hover:text-red-800 p-1.5 hover:bg-red-50 rounded-lg transition-colors"
+                              title="Delete Order"
+                            >
+                              <LogOut className="h-4 w-4" />
+                            </button>
+                        </div>
                       )}
                     </td>
                   </tr>
