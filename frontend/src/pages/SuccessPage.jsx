@@ -4,7 +4,6 @@ import { CheckCircle } from 'lucide-react';
 
 const SuccessPage = () => {
   const location = useLocation();
-  console.log("Success Page State:", location.state);
   const uniqueCode = location.state?.uniqueCode;
 
   return (

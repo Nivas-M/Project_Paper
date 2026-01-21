@@ -91,8 +91,9 @@ const AdminDashboard = () => {
     .filter(order => filter === 'All' || order.status === filter)
     .filter(order => 
       searchQuery === '' || 
-      order.studentName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      order.contact.includes(searchQuery)
+      (order.name && order.name.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (order.usn && order.usn.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (order.contact && order.contact.includes(searchQuery))
     );
 
   const getStatusColor = (status) => {
@@ -201,32 +202,66 @@ const AdminDashboard = () => {
                       </span>
                     </td>
                     <td className="px-6 py-4">
-                      <p className="font-semibold text-gray-900">{order.studentName}</p>
+                      <p className="font-semibold text-gray-900">{order.name || order.studentName || '-'}</p>
+                      {order.usn && <p className="text-xs text-indigo-600 font-medium">{order.usn}</p>}
                       <p className="text-xs text-gray-500">{new Date(order.createdAt).toLocaleString()}</p>
                     </td>
                     <td className="px-6 py-4">
-                      <div className="flex items-center gap-2">
-                        <a 
-                          href={order.fileUrl} 
-                          target="_blank" 
-                          rel="noreferrer"
-                          className="flex items-center gap-1 text-indigo-600 hover:text-indigo-800 font-medium"
-                        >
-                          <FileText className="h-4 w-4" />
-                          <span className="truncate max-w-[120px]">{order.fileName}</span>
-                        </a>
-                        <a
-                          href={getDownloadUrl(order.fileUrl, order.fileName)}
-                          className="p-1 text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 rounded transition-colors"
-                          title="Download PDF"
-                        >
-                          <Download className="h-4 w-4" />
-                        </a>
+                      <div className="space-y-1">
+                        {order.files ? (
+                          order.files.map((file, idx) => (
+                            <div key={idx} className="flex items-center gap-2">
+                              <a 
+                                href={file.fileUrl} 
+                                target="_blank" 
+                                rel="noreferrer"
+                                className="flex items-center gap-1 text-indigo-600 hover:text-indigo-800 font-medium text-sm"
+                              >
+                                <FileText className="h-4 w-4" />
+                                <span className="truncate max-w-[100px]">{file.fileName}</span>
+                                <span className="text-gray-400 text-xs">({file.pageCount}p)</span>
+                              </a>
+                              <a
+                                href={getDownloadUrl(file.fileUrl, file.fileName)}
+                                className="p-1 text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 rounded transition-colors"
+                                title="Download PDF"
+                              >
+                                <Download className="h-3 w-3" />
+                              </a>
+                            </div>
+                          ))
+                        ) : (
+                          <div className="flex items-center gap-2">
+                            <a 
+                              href={order.fileUrl} 
+                              target="_blank" 
+                              rel="noreferrer"
+                              className="flex items-center gap-1 text-indigo-600 hover:text-indigo-800 font-medium"
+                            >
+                              <FileText className="h-4 w-4" />
+                              <span className="truncate max-w-[120px]">{order.fileName}</span>
+                            </a>
+                            <a
+                              href={getDownloadUrl(order.fileUrl, order.fileName)}
+                              className="p-1 text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 rounded transition-colors"
+                              title="Download PDF"
+                            >
+                              <Download className="h-4 w-4" />
+                            </a>
+                          </div>
+                        )}
                       </div>
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-600">
                       <p>{order.copies} Copies</p>
-                      <p>{order.color ? 'Color' : 'B&W'} • {order.pageCount} Pages</p>
+                      <p>
+                        {order.colorPages === 'all' ? 'All Color' : 
+                         order.colorPages ? `Color: ${order.colorPages}` : 
+                         order.color ? 'Color' : 'B&W'}
+                      </p>
+                      <p className="text-xs text-gray-400">
+                        {order.files ? order.files.reduce((sum, f) => sum + f.pageCount, 0) : order.pageCount} pages
+                      </p>
                     </td>
                     <td className="px-6 py-4">
                       <p className="font-bold text-gray-900">₹{order.totalCost}</p>

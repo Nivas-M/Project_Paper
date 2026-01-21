@@ -70,13 +70,12 @@ router.post(
 router.post("/", async (req, res) => {
   try {
     const {
-      studentName,
+      name,
+      usn,
       contact,
-      fileUrl,
-      fileName,
-      pageCount,
+      files, // Array of { fileUrl, fileName, pageCount }
       copies,
-      color,
+      colorPages, // e.g., "1,3,5-7" or "all" or ""
       instructions,
       totalCost,
       transactionId,
@@ -107,13 +106,12 @@ router.post("/", async (req, res) => {
     }
 
     const newOrder = new Order({
-      studentName,
+      name,
+      usn,
       contact,
-      fileUrl,
-      fileName,
-      pageCount,
+      files,
       copies,
-      color,
+      colorPages,
       instructions,
       totalCost,
       transactionId,
