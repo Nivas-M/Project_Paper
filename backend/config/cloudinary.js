@@ -11,13 +11,30 @@ cloudinary.config({
 
 const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
-  params: {
-    folder: "campus_print",
-    resource_type: "auto",
-    allowed_formats: ["pdf"],
+  params: async (req, file) => {
+    // PDFs need resource_type "raw" or "auto"
+    const isImage = ['image/jpeg', 'image/png', 'image/jpg'].includes(file.mimetype);
+    return {
+      folder: "campus_print",
+      resource_type: isImage ? "image" : "raw",
+      allowed_formats: ["jpg", "png", "jpeg", "pdf"],
+      format: file.mimetype === "application/pdf" ? "pdf" : undefined,
+    };
   },
 });
 
-const upload = multer({ storage: storage });
+const upload = multer({ 
+  storage: storage,
+  limits: {
+    fileSize: 20 * 1024 * 1024, // 20MB limit
+  },
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype === 'application/pdf') {
+      cb(null, true);
+    } else {
+      cb(new Error('Only PDF files are allowed'), false);
+    }
+  },
+});
 
 module.exports = { cloudinary, upload };

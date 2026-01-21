@@ -48,13 +48,16 @@ const StudentHome = () => {
         body: data,
       });
 
-      if (!res.ok) throw new Error('Upload failed');
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.message || errorData.error || 'Upload failed');
+      }
 
       const result = await res.json();
       setUploadData(result);
     } catch (err) {
-      console.error(err);
-      setError('Failed to upload file. Please try again.');
+      console.error('Upload error:', err);
+      setError(err.message || 'Failed to upload file. Please try again.');
       setFile(null);
     } finally {
       setLoading(false);
@@ -146,7 +149,7 @@ const StudentHome = () => {
                 <FileText className="h-10 w-10 text-indigo-600 mr-4" />
                 <div className="flex-1">
                   <h3 className="font-medium text-gray-900">{uploadData.fileName}</h3>
-                  <p className="text-sm text-gray-600">{uploadData.pageCount} Pages • {((uploadData.pageCount / 1024 / 1024)).toFixed(2)} MB</p>
+                  <p className="text-sm text-gray-600">{uploadData.pageCount} Pages</p>
                 </div>
                 <button 
                   type="button" 
