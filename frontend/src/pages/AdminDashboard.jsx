@@ -9,6 +9,7 @@ const AdminDashboard = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('All');
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     fetchOrders();
@@ -68,9 +69,13 @@ const AdminDashboard = () => {
     navigate('/admin/login');
   };
 
-  const filteredOrders = filter === 'All' 
-    ? orders 
-    : orders.filter(order => order.status === filter);
+  const filteredOrders = orders
+    .filter(order => filter === 'All' || order.status === filter)
+    .filter(order => 
+      searchQuery === '' || 
+      order.studentName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      order.contact.includes(searchQuery)
+    );
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -95,6 +100,20 @@ const AdminDashboard = () => {
           <LogOut className="h-5 w-5" />
           Logout
         </button>
+      </div>
+
+      {/* Search Bar */}
+      <div className="mb-6">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Search by student name or contact..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+          />
+        </div>
       </div>
 
       {/* Stats Cards */}
@@ -150,15 +169,25 @@ const AdminDashboard = () => {
                       <p className="text-xs text-gray-500">{new Date(order.createdAt).toLocaleString()}</p>
                     </td>
                     <td className="px-6 py-4">
-                      <a 
-                        href={order.fileUrl} 
-                        target="_blank" 
-                        rel="noreferrer"
-                        className="flex items-center gap-2 text-indigo-600 hover:text-indigo-800 font-medium"
-                      >
-                        <FileText className="h-4 w-4" />
-                        <span className="truncate max-w-[150px]">{order.fileName}</span>
-                      </a>
+                      <div className="flex items-center gap-2">
+                        <a 
+                          href={order.fileUrl} 
+                          target="_blank" 
+                          rel="noreferrer"
+                          className="flex items-center gap-1 text-indigo-600 hover:text-indigo-800 font-medium"
+                        >
+                          <FileText className="h-4 w-4" />
+                          <span className="truncate max-w-[120px]">{order.fileName}</span>
+                        </a>
+                        <a
+                          href={order.fileUrl}
+                          download={order.fileName}
+                          className="p-1 text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 rounded transition-colors"
+                          title="Download PDF"
+                        >
+                          <Download className="h-4 w-4" />
+                        </a>
+                      </div>
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-600">
                       <p>{order.copies} Copies</p>

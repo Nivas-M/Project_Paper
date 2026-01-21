@@ -121,6 +121,31 @@ router.get("/status/:id", async (req, res) => {
   }
 });
 
+// 3.5. Search Orders by Student Name (Public)
+router.get("/search/:name", async (req, res) => {
+  try {
+    const searchName = req.params.name.trim();
+    if (!searchName) {
+      return res.status(400).json({ message: "Search name is required" });
+    }
+    
+    const orders = await Order.find({
+      studentName: { $regex: searchName, $options: 'i' }
+    }).sort({ createdAt: -1 });
+    
+    res.json(orders.map(order => ({
+      _id: order._id,
+      status: order.status,
+      studentName: order.studentName,
+      fileName: order.fileName,
+      totalCost: order.totalCost,
+      createdAt: order.createdAt,
+    })));
+  } catch (error) {
+    res.status(500).json({ message: "Error searching orders" });
+  }
+});
+
 // 4. Get All Orders (Admin only)
 router.get("/", auth, async (req, res) => {
   try {
