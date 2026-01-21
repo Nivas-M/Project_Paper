@@ -104,10 +104,14 @@ const AdminDashboard = () => {
     }
   };
 
-  const getDownloadUrl = (url) => {
+  const getDownloadUrl = (url, fileName) => {
     if (!url) return '#';
     if (url.includes('cloudinary.com') && url.includes('/upload/')) {
-      return url.replace('/upload/', '/upload/fl_attachment/');
+      // Sanitize filename: remove non-alphanumeric chars (keep dots/underscores), replace spaces with _
+      const safeName = fileName.replace(/[^a-zA-Z0-9._-]/g, '_');
+      // Ensure it ends with .pdf
+      const attachmentName = safeName.toLowerCase().endsWith('.pdf') ? safeName : `${safeName}.pdf`;
+      return url.replace('/upload/', `/upload/fl_attachment:${attachmentName}/`);
     }
     return url;
   };
@@ -212,7 +216,7 @@ const AdminDashboard = () => {
                           <span className="truncate max-w-[120px]">{order.fileName}</span>
                         </a>
                         <a
-                          href={getDownloadUrl(order.fileUrl)}
+                          href={getDownloadUrl(order.fileUrl, order.fileName)}
                           className="p-1 text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 rounded transition-colors"
                           title="Download PDF"
                         >
