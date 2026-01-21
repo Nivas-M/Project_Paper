@@ -104,6 +104,14 @@ const AdminDashboard = () => {
     }
   };
 
+  const getDownloadUrl = (url) => {
+    if (!url) return '#';
+    if (url.includes('cloudinary.com') && url.includes('/upload/')) {
+      return url.replace('/upload/', '/upload/fl_attachment/');
+    }
+    return url;
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-8">
@@ -204,8 +212,7 @@ const AdminDashboard = () => {
                           <span className="truncate max-w-[120px]">{order.fileName}</span>
                         </a>
                         <a
-                          href={order.fileUrl}
-                          download={order.fileName}
+                          href={getDownloadUrl(order.fileUrl)}
                           className="p-1 text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 rounded transition-colors"
                           title="Download PDF"
                         >
