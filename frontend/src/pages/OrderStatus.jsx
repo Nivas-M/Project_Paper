@@ -34,34 +34,34 @@ const OrderStatus = () => {
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'Pending': return 'text-yellow-600 bg-yellow-50 border-yellow-200';
-      case 'Printed': return 'text-blue-600 bg-blue-50 border-blue-200';
-      case 'Collected': return 'text-green-600 bg-green-50 border-green-200';
+      case 'Pending': return 'text-yellow-700 bg-yellow-50 border-yellow-200';
+      case 'Printed': return 'text-primary bg-primary/5 border-primary/20';
+      case 'Collected': return 'text-green-700 bg-green-50 border-green-200';
       default: return 'text-gray-600 bg-gray-50 border-gray-200';
     }
   };
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-12">
-      <div className="text-center mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Track Your Order</h1>
-        <p className="text-gray-600">Enter your Order ID or Student Name to track your order.</p>
+    <div className="max-w-3xl mx-auto px-4 py-12">
+      <div className="text-center mb-10">
+        <h1 className="text-3xl md:text-4xl font-bold text-primary-dark mb-3">Track Your Order</h1>
+        <p className="text-gray-600">Enter your Order ID or tracking code below.</p>
       </div>
 
-        <div className="bg-white rounded-2xl shadow-lg p-8 border border-gray-100">
-          
-        <form onSubmit={checkStatus} className="flex gap-4 mb-8">
+      <div className="bg-white rounded-3xl shadow-xl p-6 md:p-10 border border-gray-100">
+        
+        <form onSubmit={checkStatus} className="flex flex-col sm:flex-row gap-4 mb-8">
           <input
             type="text"
             value={orderId}
             onChange={(e) => setOrderId(e.target.value)}
-            placeholder="Enter Order ID or Tracking Code"
-            className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+            placeholder="Order ID / Tracking Code"
+            className="flex-1 px-5 py-4 bg-surface border border-secondary-dark rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all placeholder-gray-400"
           />
           <button
             type="submit"
             disabled={loading}
-            className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg transition-colors flex items-center gap-2 disabled:opacity-50"
+            className="px-8 py-4 bg-primary hover:bg-primary-dark text-white font-bold rounded-xl transition-all shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
           >
             {loading ? 'Searching...' : (
               <>
@@ -73,48 +73,48 @@ const OrderStatus = () => {
         </form>
 
         {error && (
-          <div className="flex items-center p-4 text-red-800 bg-red-50 rounded-lg border border-red-100 mb-6">
-            <AlertCircle className="h-5 w-5 mr-3" />
+          <div className="flex items-center p-4 text-red-800 bg-red-50 rounded-xl border border-red-100 mb-8 animate-fade-in">
+            <AlertCircle className="h-5 w-5 mr-3 flex-shrink-0" />
             {error}
           </div>
         )}
 
         {/* Single Order Display */}
         {order && (
-          <div className="border border-gray-200 rounded-xl overflow-hidden">
-            <div className="bg-gray-50 p-4 border-b border-gray-200 flex justify-between items-center">
+          <div className="border border-secondary-dark rounded-2xl overflow-hidden animate-fade-in-up">
+            <div className="bg-surface p-5 border-b border-secondary-dark flex flex-wrap gap-4 justify-between items-center">
               <div>
-                <p className="text-sm text-gray-500">Order ID</p>
-                <p className="font-mono font-medium text-gray-900">{order._id}</p>
+                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Order ID</p>
+                <p className="font-mono font-bold text-gray-900">{order.uniqueCode || order._id}</p>
               </div>
               <span className={`px-4 py-1.5 rounded-full text-sm font-bold border ${getStatusColor(order.status)}`}>
                 {order.status}
               </span>
             </div>
             
-            <div className="p-6 space-y-4">
-              <div className="flex items-center gap-3">
-                <div className="bg-indigo-100 p-2 rounded-lg">
-                  <Package className="h-6 w-6 text-indigo-600" />
+            <div className="p-6 md:p-8 space-y-6">
+              <div className="flex items-start gap-4">
+                <div className="bg-primary/10 p-3 rounded-xl flex-shrink-0">
+                  <Package className="h-6 w-6 text-primary" />
                 </div>
                 <div>
-                  <p className="text-sm text-gray-500">File Name</p>
-                  <p className="font-medium text-gray-900">{order.fileName}</p>
+                  <p className="text-sm font-medium text-gray-500 mb-1">Files</p>
+                  <p className="font-semibold text-gray-900">{order.fileName}</p>
                 </div>
               </div>
 
-              <div className="flex items-center gap-3">
-                <div className="bg-indigo-100 p-2 rounded-lg">
-                  <Clock className="h-6 w-6 text-indigo-600" />
+              <div className="flex items-start gap-4">
+                <div className="bg-primary/10 p-3 rounded-xl flex-shrink-0">
+                  <Clock className="h-6 w-6 text-primary" />
                 </div>
                 <div>
-                  <p className="text-sm text-gray-500">Ordered At</p>
-                  <p className="font-medium text-gray-900">{new Date(order.createdAt).toLocaleString()}</p>
+                  <p className="text-sm font-medium text-gray-500 mb-1">Ordered At</p>
+                  <p className="font-semibold text-gray-900">{new Date(order.createdAt).toLocaleString()}</p>
                 </div>
               </div>
 
               {order.status === 'Collected' && (
-                <div className="mt-4 p-4 bg-green-50 rounded-lg flex items-center gap-3 text-green-800">
+                <div className="mt-6 p-4 bg-green-50 rounded-xl flex items-center gap-3 text-green-800 border border-green-100">
                   <CheckCircle className="h-5 w-5" />
                   <p className="font-medium">This order has been picked up.</p>
                 </div>

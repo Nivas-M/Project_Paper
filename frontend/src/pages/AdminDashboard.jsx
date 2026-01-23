@@ -98,25 +98,26 @@ const AdminDashboard = () => {
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'Pending': return 'bg-yellow-100 text-yellow-800';
-      case 'Printed': return 'bg-blue-100 text-blue-800';
-      case 'Collected': return 'bg-green-100 text-green-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'Pending': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      case 'Printed': return 'bg-primary/10 text-primary border-primary/20';
+      case 'Collected': return 'bg-green-100 text-green-800 border-green-200';
+      default: return 'bg-gray-100 text-gray-800 border-gray-200';
     }
   };
 
   const getDownloadUrl = (url, fileName) => {
     if (!url) return '#';
-    if (url.includes('cloudinary.com') && url.includes('/upload/')) {
-      // Check for raw resource type (common for PDFs in this app)
-      if (url.includes('/raw/upload/')) {
-        // Raw files don't support named attachment transformation via URL path
-        return url.replace('/upload/', '/upload/fl_attachment/');
-      }
+    // Ensure filename ends with .pdf
+    const safeName = fileName.replace(/[^a-zA-Z0-9._-]/g, '_');
+    const attachmentName = safeName.toLowerCase().endsWith('.pdf') ? safeName : `${safeName}.pdf`;
 
-      // For images/auto, we can rename
-      const safeName = fileName.replace(/[^a-zA-Z0-9._-]/g, '_');
-      const attachmentName = safeName.toLowerCase().endsWith('.pdf') ? safeName : `${safeName}.pdf`;
+    if (url.includes('cloudinary.com') && url.includes('/upload/')) {
+      if (url.includes('/raw/upload/')) {
+        // For raw files, we can't always transform, but we can try 
+        // appending the attachment name if the API supports it, or just return the URL
+        // A common Cloudinary trick for raw files is fl_attachment
+        return url.replace('/upload/', `/upload/fl_attachment:${attachmentName}/`);
+      }
       return url.replace('/upload/', `/upload/fl_attachment:${attachmentName}/`);
     }
     return url;
@@ -124,76 +125,79 @@ const AdminDashboard = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-8">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Order Management</h1>
+          <h1 className="text-3xl font-bold text-primary-dark">Order Management</h1>
           <p className="text-gray-500 mt-1">Manage and track student print requests</p>
         </div>
         <button 
           onClick={handleLogout}
-          className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-red-600 font-medium transition-colors"
+          className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-red-600 font-medium transition-colors bg-white rounded-lg border border-gray-200 hover:border-red-200"
         >
           <LogOut className="h-5 w-5" />
           Logout
         </button>
       </div>
 
-      {/* Search Bar */}
-      <div className="mb-6">
-        <div className="relative">
+      {/* Controls */}
+      <div className="flex flex-col md:flex-row gap-4 mb-8">
+        <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
           <input
             type="text"
-            placeholder="Search by student name or contact..."
+            placeholder="Search by student name or USN..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+            className="w-full pl-10 pr-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent outline-none shadow-sm"
           />
+        </div>
+        
+        {/* Filter Pills */}
+        <div className="flex overflow-x-auto gap-2 pb-2 md:pb-0 no-scrollbar">
+          {['All', 'Pending', 'Printed', 'Collected'].map((stat) => (
+            <button
+              key={stat}
+              onClick={() => setFilter(stat)}
+              className={`px-5 py-2.5 rounded-full text-sm font-semibold whitespace-nowrap transition-all border ${
+                filter === stat 
+                  ? 'bg-primary text-white border-primary shadow-md' 
+                  : 'bg-white text-gray-600 border-gray-200 hover:border-primary/50 hover:text-primary'
+              }`}
+            >
+              {stat} <span className={`ml-1 text-xs px-1.5 py-0.5 rounded-full ${filter === stat ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-500'}`}>
+                {stat === 'All' ? orders.length : orders.filter(o => o.status === stat).length}
+              </span>
+            </button>
+          ))}
         </div>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-        {['All', 'Pending', 'Printed', 'Collected'].map((stat) => (
-          <button
-            key={stat}
-            onClick={() => setFilter(stat)}
-            className={`p-4 rounded-xl border transition-all text-left ${
-              filter === stat 
-                ? 'bg-indigo-50 border-indigo-200 ring-2 ring-indigo-500 ring-offset-2' 
-                : 'bg-white border-gray-200 hover:border-indigo-300'
-            }`}
-          >
-            <p className="text-sm font-medium text-gray-500 uppercase">{stat} Orders</p>
-            <p className="text-2xl font-bold text-gray-900 mt-1">
-              {stat === 'All' ? orders.length : orders.filter(o => o.status === stat).length}
-            </p>
-          </button>
-        ))}
-      </div>
-
-      {/* Orders Table */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-        {loading ? (
-          <div className="p-8 text-center text-gray-500">Loading orders...</div>
-        ) : filteredOrders.length === 0 ? (
-          <div className="p-12 text-center">
-            <div className="bg-gray-100 p-4 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
-              <Search className="h-8 w-8 text-gray-400" />
-            </div>
-            <h3 className="text-lg font-medium text-gray-900">No Orders Found</h3>
-            <p className="text-gray-500">There are no orders with this status.</p>
+      {loading ? (
+        <div className="text-center py-20">
+          <div className="animate-spin h-10 w-10 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
+          <p className="text-gray-500">Loading orders...</p>
+        </div>
+      ) : filteredOrders.length === 0 ? (
+        <div className="bg-white rounded-2xl p-12 text-center shadow-sm border border-gray-100">
+          <div className="bg-gray-50 p-4 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
+            <Search className="h-8 w-8 text-gray-300" />
           </div>
-        ) : (
-          <div className="overflow-x-auto">
+          <h3 className="text-lg font-bold text-gray-900">No Orders Found</h3>
+          <p className="text-gray-500">Try adjusting your search or filter.</p>
+        </div>
+      ) : (
+        <>
+          {/* Desktop Table View */}
+          <div className="hidden md:block bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
             <table className="w-full text-left">
-              <thead className="bg-gray-50 border-b border-gray-200">
+              <thead className="bg-gray-50/50 border-b border-gray-200">
                 <tr>
                   <th className="px-6 py-4 font-semibold text-gray-700 text-sm">Code</th>
-                  <th className="px-6 py-4 font-semibold text-gray-700 text-sm">Order Info</th>
-                  <th className="px-6 py-4 font-semibold text-gray-700 text-sm">File Details</th>
+                  <th className="px-6 py-4 font-semibold text-gray-700 text-sm">Student</th>
+                  <th className="px-6 py-4 font-semibold text-gray-700 text-sm">Files</th>
                   <th className="px-6 py-4 font-semibold text-gray-700 text-sm">Config</th>
-                  <th className="px-6 py-4 font-semibold text-gray-700 text-sm">Payment</th>
+                  <th className="px-6 py-4 font-semibold text-gray-700 text-sm">Total</th>
                   <th className="px-6 py-4 font-semibold text-gray-700 text-sm">Status</th>
                   <th className="px-6 py-4 font-semibold text-gray-700 text-sm text-right">Actions</th>
                 </tr>
@@ -202,50 +206,42 @@ const AdminDashboard = () => {
                 {filteredOrders.map((order) => (
                   <tr key={order._id} className="hover:bg-gray-50 transition-colors">
                     <td className="px-6 py-4">
-                      <span className="font-mono font-bold text-indigo-600 bg-indigo-50 px-2 py-1 rounded">
+                      <span className="font-mono font-bold text-primary bg-primary/10 px-2 py-1 rounded">
                         {order.uniqueCode || '-'}
                       </span>
                     </td>
                     <td className="px-6 py-4">
                       <p className="font-semibold text-gray-900">{order.name || order.studentName || '-'}</p>
-                      {order.usn && <p className="text-xs text-indigo-600 font-medium">{order.usn}</p>}
-                      <p className="text-xs text-gray-500">{new Date(order.createdAt).toLocaleString()}</p>
+                      {order.usn && <p className="text-xs text-primary font-medium">{order.usn}</p>}
                     </td>
                     <td className="px-6 py-4">
                       <div className="space-y-1">
                         {order.files ? (
                           order.files.map((file, idx) => (
-                            <div key={idx} className="flex items-center gap-2">
-                              <a 
-                                href={getDownloadUrl(file.fileUrl, file.fileName)}
-                                className="flex items-center gap-1 text-indigo-600 hover:text-indigo-800 font-medium text-sm"
-                                title="Click to download"
-                              >
-                                <FileText className="h-4 w-4" />
-                                <span className="truncate max-w-[150px]">{file.fileName}</span>
-                                <span className="text-gray-400 text-xs">({file.pageCount}p)</span>
-                              </a>
-                            </div>
-                          ))
-                        ) : (
-                          <div className="flex items-center gap-2">
                             <a 
-                              href={getDownloadUrl(order.fileUrl, order.fileName)}
-                              className="flex items-center gap-1 text-indigo-600 hover:text-indigo-800 font-medium"
-                              title="Click to download"
+                              key={idx}
+                              href={getDownloadUrl(file.fileUrl, file.fileName)}
+                              className="flex items-center gap-2 text-primary hover:text-primary-dark font-medium text-sm group"
+                              title="Download PDF"
                             >
                               <FileText className="h-4 w-4" />
-                              <span className="truncate max-w-[150px]">{order.fileName}</span>
+                              <span className="truncate max-w-[120px] group-hover:underline">{file.fileName}</span>
                             </a>
-                          </div>
+                          ))
+                        ) : (
+                          <a 
+                            href={getDownloadUrl(order.fileUrl, order.fileName)}
+                            className="flex items-center gap-2 text-primary hover:text-primary-dark font-medium text-sm group"
+                            title="Download PDF"
+                          >
+                            <FileText className="h-4 w-4" />
+                            <span className="truncate max-w-[120px] group-hover:underline">{order.fileName}</span>
+                          </a>
                         )}
                       </div>
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-600">
-                      <p className="font-medium">{order.copies} Copies</p>
-                      <p className="text-xs text-gray-400 mb-1">
-                        {order.files ? order.files.reduce((sum, f) => sum + f.pageCount, 0) : order.pageCount} pages total
-                      </p>
+                    <td className="px-6 py-4 text-sm">
+                      <p className="font-medium text-gray-900">{order.copies} Copies</p>
                       {/* Color Mode Display */}
                       {order.colorPages === 'all' ? (
                         <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800">
@@ -254,7 +250,7 @@ const AdminDashboard = () => {
                       ) : order.colorPages ? (
                         <div>
                           <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-orange-100 text-orange-800">
-                            🎨 Color Pages: {order.colorPages}
+                            🎨 Mixed
                           </span>
                         </div>
                       ) : (
@@ -262,50 +258,31 @@ const AdminDashboard = () => {
                           ⬛ All B&W
                         </span>
                       )}
-                      {/* Instructions */}
+                      
+                      {/* Instructions - Desktop */}
                       {order.instructions && (
-                        <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded text-xs text-yellow-800">
-                          📝 <strong>Note:</strong> {order.instructions}
+                        <div className="mt-2 p-1.5 bg-yellow-50 border border-yellow-200 rounded text-xs text-yellow-800 break-words max-w-[200px]">
+                          📝 {order.instructions}
                         </div>
                       )}
                     </td>
+                    <td className="px-6 py-4 font-bold text-gray-900">₹{order.totalCost}</td>
                     <td className="px-6 py-4">
-                      <p className="font-bold text-gray-900">₹{order.totalCost}</p>
-                      <p className="text-xs font-mono text-gray-500">{order.transactionId}</p>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(order.status)}`}>
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold border ${getStatusColor(order.status)}`}>
                         {order.status}
                       </span>
                     </td>
                     <td className="px-6 py-4 text-right">
                       {order.status === 'Pending' && (
-                        <button 
-                          onClick={() => updateStatus(order._id, 'Printed')}
-                          className="text-blue-600 hover:text-blue-800 text-sm font-medium mr-3"
-                        >
-                          Mark Printed
-                        </button>
+                        <button onClick={() => updateStatus(order._id, 'Printed')} className="text-blue-600 hover:text-blue-800 text-sm font-bold">Print</button>
                       )}
                       {order.status === 'Printed' && (
-                        <button 
-                          onClick={() => updateStatus(order._id, 'Collected')}
-                          className="text-green-600 hover:text-green-800 text-sm font-medium"
-                        >
-                          Mark Collected
-                        </button>
+                        <button onClick={() => updateStatus(order._id, 'Collected')} className="text-green-600 hover:text-green-800 text-sm font-bold">Collect</button>
                       )}
                       {order.status === 'Collected' && (
-                        <div className="flex gap-3 justify-end items-center">
-                            <span className="text-gray-400 text-sm font-medium">Completed</span>
-                            <button 
-                              onClick={() => handleDelete(order._id)}
-                              className="text-red-600 hover:text-red-800 p-1.5 hover:bg-red-50 rounded-lg transition-colors"
-                              title="Delete Order"
-                            >
-                              <LogOut className="h-4 w-4" />
-                            </button>
-                        </div>
+                        <button onClick={() => handleDelete(order._id)} className="text-red-500 hover:text-red-700 p-1 rounded hover:bg-red-50">
+                          <LogOut className="h-4 w-4" />
+                        </button>
                       )}
                     </td>
                   </tr>
@@ -313,8 +290,104 @@ const AdminDashboard = () => {
               </tbody>
             </table>
           </div>
-        )}
-      </div>
+
+          {/* Mobile Card List View */}
+          <div className="md:hidden space-y-4">
+            {filteredOrders.map((order) => (
+              <div key={order._id} className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
+                <div className="flex justify-between items-start mb-4">
+                  <div>
+                    <span className="font-mono font-bold text-xs text-primary bg-primary/10 px-2 py-1 rounded inline-block mb-2">
+                       {order.uniqueCode}
+                    </span>
+                    <h3 className="font-bold text-lg text-gray-900">{order.name || order.studentName}</h3>
+                    <p className="text-sm text-gray-500">{order.usn}</p>
+                  </div>
+                  <span className={`px-3 py-1 rounded-full text-xs font-bold border ${getStatusColor(order.status)}`}>
+                    {order.status}
+                  </span>
+                </div>
+
+                <div className="space-y-3 mb-4">
+                   <div className="flex items-center gap-2 text-sm text-gray-600">
+                     <FileText className="h-4 w-4 text-primary" />
+                     {order.files ? (
+                       <span className="truncate max-w-[200px]">{order.files.length} files ({order.files.reduce((s, f) => s + f.pageCount, 0)} pages)</span>
+                     ) : (
+                       <span>{order.pageCount} pages</span>
+                     )}
+                   </div>
+                   
+                   {/* Instructions - Mobile */}
+                   {order.instructions && (
+                     <div className="p-3 bg-yellow-50 rounded-xl border border-yellow-100 text-sm text-yellow-800">
+                       <span className="font-bold block text-yellow-900 mb-1">📝 Note:</span>
+                       {order.instructions}
+                     </div>
+                   )}
+
+                   <div className="flex justify-between items-center bg-gray-50 p-3 rounded-xl border border-gray-100">
+                     <span className="text-sm font-medium text-gray-600">{order.copies} Copies • {order.colorPages === 'all' ? 'Color' : 'B&W'}</span>
+                     <span className="font-bold text-lg text-primary">₹{order.totalCost}</span>
+                   </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  {order.files ? (
+                    order.files.map((file, idx) => (
+                             <a 
+                               key={idx}
+                               href={getDownloadUrl(file.fileUrl, file.fileName)}
+                               download={file.fileName}
+                               target="_blank"
+                               rel="noopener noreferrer"
+                               className="flex items-center gap-2 text-primary hover:text-primary-dark font-medium text-sm group"
+                               title="Download PDF"
+                             >
+                         <Download className="h-4 w-4" />
+                         File {idx + 1}
+                       </a>
+                    ))
+                  ) : (
+                    <a 
+                       href={getDownloadUrl(order.fileUrl, order.fileName)}
+                       className="flex items-center justify-center gap-2 py-2.5 bg-secondary text-primary-dark font-semibold rounded-lg text-sm border border-secondary-dark col-span-2"
+                     >
+                       <Download className="h-4 w-4" />
+                       Download PDF
+                     </a>
+                  )}
+                  
+                  {order.status === 'Pending' && (
+                    <button 
+                      onClick={() => updateStatus(order._id, 'Printed')}
+                      className="col-span-2 py-2.5 bg-blue-600 text-white font-bold rounded-lg text-sm shadow-sm active:scale-95 transition-transform"
+                    >
+                      Mark as Printed
+                    </button>
+                  )}
+                  {order.status === 'Printed' && (
+                    <button 
+                      onClick={() => updateStatus(order._id, 'Collected')}
+                      className="col-span-2 py-2.5 bg-green-600 text-white font-bold rounded-lg text-sm shadow-sm active:scale-95 transition-transform"
+                    >
+                      Mark as Collected
+                    </button>
+                  )}
+                  {order.status === 'Collected' && (
+                    <button 
+                      onClick={() => handleDelete(order._id)}
+                      className="col-span-2 py-2.5 bg-red-50 text-red-600 font-bold rounded-lg text-sm border border-red-100"
+                    >
+                      Delete Order
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
     </div>
   );
 };

@@ -2,15 +2,11 @@ const express = require("express");
 const router = express.Router();
 const jwt = require("jsonwebtoken");
 
-// Hardcoded Admin Credentials (as per PRD "Simple JWT-based auth")
-// In a real production app, use a database with hashed passwords.
-const ADMIN_USERNAME = "admin";
-const ADMIN_PASSWORD = "password123"; // Change this!
+  // Use environment variables for admin credentials
+  const validUsername = process.env.ADMIN_USERNAME || "admin";
+  const validPassword = process.env.ADMIN_PASSWORD || "password123";
 
-router.post("/login", (req, res) => {
-  const { username, password } = req.body;
-
-  if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
+  if (username === validUsername && password === validPassword) {
     const token = jwt.sign(
       { username: ADMIN_USERNAME },
       process.env.JWT_SECRET,
