@@ -108,9 +108,14 @@ const AdminDashboard = () => {
   const getDownloadUrl = (url, fileName) => {
     if (!url) return '#';
     if (url.includes('cloudinary.com') && url.includes('/upload/')) {
-      // Sanitize filename: remove non-alphanumeric chars (keep dots/underscores), replace spaces with _
+      // Check for raw resource type (common for PDFs in this app)
+      if (url.includes('/raw/upload/')) {
+        // Raw files don't support named attachment transformation via URL path
+        return url.replace('/upload/', '/upload/fl_attachment/');
+      }
+
+      // For images/auto, we can rename
       const safeName = fileName.replace(/[^a-zA-Z0-9._-]/g, '_');
-      // Ensure it ends with .pdf
       const attachmentName = safeName.toLowerCase().endsWith('.pdf') ? safeName : `${safeName}.pdf`;
       return url.replace('/upload/', `/upload/fl_attachment:${attachmentName}/`);
     }
@@ -212,41 +217,25 @@ const AdminDashboard = () => {
                           order.files.map((file, idx) => (
                             <div key={idx} className="flex items-center gap-2">
                               <a 
-                                href={file.fileUrl} 
-                                target="_blank" 
-                                rel="noreferrer"
+                                href={getDownloadUrl(file.fileUrl, file.fileName)}
                                 className="flex items-center gap-1 text-indigo-600 hover:text-indigo-800 font-medium text-sm"
+                                title="Click to download"
                               >
                                 <FileText className="h-4 w-4" />
-                                <span className="truncate max-w-[100px]">{file.fileName}</span>
+                                <span className="truncate max-w-[150px]">{file.fileName}</span>
                                 <span className="text-gray-400 text-xs">({file.pageCount}p)</span>
-                              </a>
-                              <a
-                                href={getDownloadUrl(file.fileUrl, file.fileName)}
-                                className="p-1 text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 rounded transition-colors"
-                                title="Download PDF"
-                              >
-                                <Download className="h-3 w-3" />
                               </a>
                             </div>
                           ))
                         ) : (
                           <div className="flex items-center gap-2">
                             <a 
-                              href={order.fileUrl} 
-                              target="_blank" 
-                              rel="noreferrer"
+                              href={getDownloadUrl(order.fileUrl, order.fileName)}
                               className="flex items-center gap-1 text-indigo-600 hover:text-indigo-800 font-medium"
+                              title="Click to download"
                             >
                               <FileText className="h-4 w-4" />
-                              <span className="truncate max-w-[120px]">{order.fileName}</span>
-                            </a>
-                            <a
-                              href={getDownloadUrl(order.fileUrl, order.fileName)}
-                              className="p-1 text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 rounded transition-colors"
-                              title="Download PDF"
-                            >
-                              <Download className="h-4 w-4" />
+                              <span className="truncate max-w-[150px]">{order.fileName}</span>
                             </a>
                           </div>
                         )}

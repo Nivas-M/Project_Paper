@@ -122,7 +122,9 @@ router.post("/", async (req, res) => {
     res.status(201).json(savedOrder);
   } catch (error) {
     console.error("Order Creation Error:", error);
-    res.status(500).json({ message: "Error creating order" });
+    res
+      .status(500)
+      .json({ message: "Error creating order", error: error.message });
   }
 });
 
@@ -148,8 +150,8 @@ router.get("/status/:id", async (req, res) => {
       _id: order._id,
       uniqueCode: order.uniqueCode,
       status: order.status,
-      studentName: order.studentName,
-      fileName: order.fileName,
+      studentName: order.name,
+      fileName: order.files.map((f) => f.fileName).join(", "),
       totalCost: order.totalCost,
       createdAt: order.createdAt,
     });
@@ -167,15 +169,15 @@ router.get("/search/:name", async (req, res) => {
     }
 
     const orders = await Order.find({
-      studentName: { $regex: searchName, $options: "i" },
+      name: { $regex: searchName, $options: "i" },
     }).sort({ createdAt: -1 });
 
     res.json(
       orders.map((order) => ({
         _id: order._id,
         status: order.status,
-        studentName: order.studentName,
-        fileName: order.fileName,
+        studentName: order.name,
+        fileName: order.files.map((f) => f.fileName).join(", "),
         totalCost: order.totalCost,
         createdAt: order.createdAt,
       })),
@@ -191,7 +193,9 @@ router.get("/", auth, async (req, res) => {
     const orders = await Order.find().sort({ createdAt: -1 });
     res.json(orders);
   } catch (error) {
-    res.status(500).json({ message: "Error fetching orders" });
+    res
+      .status(500)
+      .json({ message: "Error fetching orders", error: error.message });
   }
 });
 

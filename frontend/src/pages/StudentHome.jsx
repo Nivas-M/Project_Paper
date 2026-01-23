@@ -209,6 +209,15 @@ const StudentHome = () => {
                 <span className="text-sm text-gray-500">Max 20MB per file</span>
               </label>
             </div>
+
+            <div className="mt-4 p-4 bg-yellow-50 rounded-lg flex items-start gap-3 border border-yellow-100">
+              <AlertCircle className="h-5 w-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+              <p className="text-sm text-yellow-800">
+                <span className="font-semibold block mb-1">Delivery Timeline:</span>
+                PDFs uploaded between 6:00 AM and 8:00 PM today will be delivered tomorrow. 
+                Uploads after this time will be delivered the day after tomorrow.
+              </p>
+            </div>
           </div>
 
           {/* Step 2: Order Details */}
