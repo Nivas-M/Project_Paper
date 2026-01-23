@@ -3,7 +3,7 @@ const mongoose = require("mongoose");
 const router = express.Router();
 const Order = require("../models/Order");
 const { upload } = require("../config/cloudinary");
-const pdf = require("pdf-parse");
+const { PDFDocument } = require("pdf-lib");
 const axios = require("axios");
 const auth = require("../middleware/auth.js");
 
@@ -43,9 +43,9 @@ router.post(
           responseType: "arraybuffer",
         });
 
-        const buffer = Buffer.from(response.data);
-        const data = await pdf(buffer);
-        pageCount = data.numpages;
+        const buffer = response.data;
+        const pdfDoc = await PDFDocument.load(buffer);
+        pageCount = pdfDoc.getPageCount();
 
         console.log(`PDF Parsed. Page Count: ${pageCount}`);
       }
